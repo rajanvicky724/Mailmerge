@@ -279,7 +279,6 @@ if st.button("🚀 Run Mail Merge", type="primary", use_container_width=True):
                         if os.path.exists(pth):
                             try:
                                 d = Document(pth)
-                                master_doc.add_page_break()
                                 composer.append(d)
                             except Exception:
                                 pass
@@ -330,3 +329,4 @@ if st.button("🚀 Run Mail Merge", type="primary", use_container_width=True):
 
 st.markdown("---")
 st.caption("stampaunioneqr – DOCX mail merge with X/Y QR positioning")
+
