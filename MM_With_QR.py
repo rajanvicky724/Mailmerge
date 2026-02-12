@@ -17,6 +17,7 @@ import tempfile
 import os
 import zipfile
 import io
+from io import BytesIO
 
 # ============ CONFIG ============
 REQUIRED_COL = "Property_Account_No"
@@ -29,9 +30,6 @@ def sanitize_filename(name: str) -> str:
     return (name.replace("/", "-").replace("\\", "-").replace(":", "-")
                 .replace("*", "-").replace("?", "-").replace("\"", "-")
                 .replace("<", "-").replace(">", "-").replace("|", "-"))
-
-from io import BytesIO
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
 
 def _new_anchor(run, image_path, width_inches, height_inches, pos_x_inches, pos_y_inches):
     """Create wp:anchor element for floating image at absolute page coords."""
@@ -97,25 +95,27 @@ def _new_anchor(run, image_path, width_inches, height_inches, pos_x_inches, pos_
 
 def add_qr_xy_to_docx(docx_path: str, url: str, qr_temp_folder: str,
                       x_inches: float, y_inches: float,
-                      qr_size_inches: float):
+                      qr_size_inches: float) -> bool:
     """Add QR as floating image at absolute (x_inches, y_inches) from top-left of page."""
     try:
+        # Create QR image
         qr = qrcode.make(url)
         qr_png = os.path.join(qr_temp_folder, f"qr_{os.path.basename(docx_path)}.png")
         qr.save(qr_png)
 
-doc = Document(docx_path)
+        # Open existing docx
+        doc = Document(docx_path)
 
-# Use the last existing paragraph (still on page 1 for your template)
-# so we don't create an extra page.
-if doc.paragraphs:
-    p = doc.paragraphs[-1]
-else:
-    p = doc.add_paragraph()
+        # Use the last existing paragraph (on page 1 in your template)
+        # so we don't create an extra blank page.
+        if doc.paragraphs:
+            p = doc.paragraphs[-1]
+        else:
+            p = doc.add_paragraph()
 
-run = p.add_run()
+        run = p.add_run()
 
-
+        # Create floating anchor
         anchor = _new_anchor(
             run,
             qr_png,
@@ -129,8 +129,10 @@ run = p.add_run()
         drawing.append(anchor)
         run._r.append(drawing)
 
+        # Save updated document
         doc.save(docx_path)
         return True
+
     except Exception as e:
         st.warning(f"⚠️ QR XY failed for {os.path.basename(docx_path)}: {e}")
         return False
@@ -328,8 +330,3 @@ if st.button("🚀 Run Mail Merge", type="primary", use_container_width=True):
 
 st.markdown("---")
 st.caption("stampaunioneqr – DOCX mail merge with X/Y QR positioning")
-
-
-
-
-
