@@ -4,6 +4,4 @@ openpyxl
 docx-mailmerge
 python-docx
 docxcompose
-PyPDF2
-reportlab
 qrcode[pil]
