@@ -106,10 +106,14 @@ def add_qr_xy_to_docx(docx_path: str, url: str, qr_temp_folder: str,
 
         doc = Document(docx_path)
 
-        # Anchor attached to an empty paragraph at end
+        # Use the last existing paragraph (still on page 1 for your template)
+        # so we don't create an extra page.
+        if doc.paragraphs:
+        p = doc.paragraphs[-1]
+      else:
         p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        run = p.add_run()
+
+run = p.add_run()
 
         anchor = _new_anchor(
             run,
@@ -323,4 +327,5 @@ if st.button("🚀 Run Mail Merge", type="primary", use_container_width=True):
 
 st.markdown("---")
 st.caption("stampaunioneqr – DOCX mail merge with X/Y QR positioning")
+
 
