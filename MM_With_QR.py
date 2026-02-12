@@ -30,13 +30,21 @@ def sanitize_filename(name: str) -> str:
                 .replace("*", "-").replace("?", "-").replace("\"", "-")
                 .replace("<", "-").replace(">", "-").replace("|", "-"))
 
+from io import BytesIO
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
 def _new_anchor(run, image_path, width_inches, height_inches, pos_x_inches, pos_y_inches):
     """Create wp:anchor element for floating image at absolute page coords."""
     part = run.part
+
+    # Read image and wrap in BytesIO so python-docx can seek()
     with open(image_path, "rb") as f:
         image_bytes = f.read()
-    image = part.package.image_parts.get_or_add_image_part(image_bytes)
-    rId = part.relate_to(image, RT.IMAGE)
+    image_stream = BytesIO(image_bytes)
+
+    # Add image part correctly
+    image_part = part.package.image_parts.get_or_add_image_part(image_stream)
+    rId = part.relate_to(image_part, RT.IMAGE)
 
     cx = int(width_inches * EMU_PER_INCH)
     cy = int(height_inches * EMU_PER_INCH)
@@ -85,8 +93,7 @@ def _new_anchor(run, image_path, width_inches, height_inches, pos_x_inches, pos_
       </a:graphic>
     </wp:anchor>
     """
-    anchor = parse_xml(anchor_xml)
-    return anchor
+    return parse_xml(anchor_xml)
 
 def add_qr_xy_to_docx(docx_path: str, url: str, qr_temp_folder: str,
                       x_inches: float, y_inches: float,
@@ -316,3 +323,4 @@ if st.button("🚀 Run Mail Merge", type="primary", use_container_width=True):
 
 st.markdown("---")
 st.caption("stampaunioneqr – DOCX mail merge with X/Y QR positioning")
+
